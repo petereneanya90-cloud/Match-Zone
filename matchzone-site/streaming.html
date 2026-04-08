@@ -250,9 +250,9 @@ function sameMatch(a, b) {
   return normTeam(a.homeTeam)===normTeam(b.homeTeam) && normTeam(a.awayTeam)===normTeam(b.awayTeam);
 }
 
-async function loadStreams() {
+async function loadStreams(firstLoad = false) {
   hideBanner('err-streams');
-  document.getElementById('matches-grid').innerHTML = skeletons(9);
+  if (firstLoad) document.getElementById('matches-grid').innerHTML = skeletons(9);
   try {
     const [streamRes, liveRes] = await Promise.allSettled([
       fetch(apiUrl('/matchzone/data/streaming?sport=all')).then(r=>r.json()),
@@ -355,9 +355,48 @@ async function loadMoreNews() {
   if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-plus"></i> Load More'; }
 }
 
+// Override openStreamForMatch to fetch fresh URLs before playing
+// (CDN signs URLs with ~4-5 min expiry; stale cached URLs return 403)
+const _baseOpenStreamForMatch = openStreamForMatch;
+window.openStreamForMatch = async function(matchKey, streamKey) {
+  const m = matchCache[matchKey];
+  if (m && isFinished(m.status)) { showMatchEndedScreen(m); return; }
+  const btn = event?.target?.closest('.watch-btn');
+  const origInner = btn ? btn.innerHTML : null;
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
+  try {
+    const [sRes, lRes] = await Promise.allSettled([
+      fetch(apiUrl('/matchzone/data/streaming?sport=all')).then(r=>r.json()),
+      fetch(apiUrl('/matchzone/data/football-live')).then(r=>r.json()),
+    ]);
+    let freshMatches = (sRes.status==='fulfilled' && sRes.value.result?.matches) ? sRes.value.result.matches : [];
+    if (lRes.status==='fulfilled' && lRes.value.success) {
+      const liveMatches = (lRes.value.result?.matches || []).filter(x=>x.streams?.length);
+      liveMatches.forEach(lm => {
+        const idx = freshMatches.findIndex(sm => sameMatch(sm, lm));
+        if (idx !== -1) freshMatches[idx] = { ...freshMatches[idx], ...lm };
+        else freshMatches.push({ ...lm, sport: 'football' });
+      });
+    }
+    allMatches = freshMatches;
+    renderStreams();
+    const freshM = m ? freshMatches.find(fm => sameMatch(fm, m)) : null;
+    if (freshM && freshM.streams && freshM.streams.length > 0) {
+      window._streamFallbacks = freshM.streams.slice(1);
+      playStream(freshM.streams[0].url, freshM.streams[0].title || 'Watch Live');
+    } else {
+      _baseOpenStreamForMatch(matchKey, streamKey);
+    }
+  } catch(e) {
+    _baseOpenStreamForMatch(matchKey, streamKey);
+  } finally {
+    if (btn && origInner) { btn.disabled = false; btn.innerHTML = origInner; }
+  }
+};
+
 // Init
-loadStreams();
-setInterval(loadStreams, 60000);
+loadStreams(true);
+setInterval(() => loadStreams(false), 60000);
 </script>
 </body>
 </html>
