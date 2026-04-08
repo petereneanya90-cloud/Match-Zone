@@ -429,8 +429,14 @@ function playStream(url, title) {
           }
           const httpStatus = d.response && d.response.code;
           if (httpStatus === 403) {
-            // 403 Forbidden = stream access denied / ended
-            _showError(true);
+            // 403 = access denied — silently try next fallback, show error only when all exhausted
+            if (window._streamFallbacks && window._streamFallbacks.length) {
+              const next = window._streamFallbacks.shift();
+              _showLoader("Trying another stream…");
+              playStream(next.url, next.title || title);
+            } else {
+              _showError(window._streamPlayed);
+            }
           } else {
             _retryViaProxy();
           }
