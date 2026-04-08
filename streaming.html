@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MatchZone Live – Watch &amp; News</title>
+  <link rel="icon" href="https://files.catbox.moe/fv0vec.jpg">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="assets/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js"></script>
+  <style>
+    .content-tabs { display: flex; gap: 0; margin-bottom: 24px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); width: fit-content; }
+    .content-tab {
+      padding: 9px 22px; font-size: 0.88rem; font-weight: 700; cursor: pointer; border: none;
+      background: var(--surface); color: var(--muted); transition: all 0.2s; display: flex; align-items: center; gap: 7px;
+    }
+    .content-tab.active { background: var(--primary-dim); color: var(--primary); }
+    .content-tab:hover:not(.active) { color: var(--text); }
+    .content-panel { display: none; }
+    .content-panel.visible { display: block; animation: fadeIn 0.2s; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a class="logo" href="index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="26" height="26" style="vertical-align:middle;margin-right:5px;flex-shrink:0"><defs><linearGradient id="mzg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00e5ff"/><stop offset="100%" stop-color="#0066ff"/></linearGradient></defs><rect width="36" height="36" rx="9" fill="url(#mzg)"/><text x="18" y="25" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="17" fill="#000" letter-spacing="-1">MZ</text></svg>Match<span>Zone</span></a>
+    <div class="nav-links">
+      <a class="nav-link" href="index.html"><i class="fas fa-home"></i> Home</a>
+      <a class="nav-link" href="live.html"><i class="fas fa-circle-dot"></i> Live</a>
+      <a class="nav-link" href="streaming.html"><i class="fas fa-play-circle"></i> Streaming</a>
+      <a class="nav-link" href="schedule.html"><i class="fas fa-calendar"></i> Schedule</a>
+      <a class="nav-link" href="news.html"><i class="fas fa-newspaper"></i> News</a>
+      <a class="nav-link" href="tv.html"><i class="fas fa-tv"></i> Live TV</a>
+      <a class="nav-link" href="docs.html"><i class="fas fa-book"></i> Docs</a>
+    </div>
+    <span class="live-badge" id="live-badge">— LIVE</span>
+    <button class="nav-hamburger" id="nav-hamburger" onclick="toggleDrawer()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+<div class="nav-drawer" id="nav-drawer">
+  <a class="nav-link" href="index.html"><i class="fas fa-home"></i> Home</a>
+  <a class="nav-link" href="live.html"><i class="fas fa-circle-dot"></i> Live</a>
+  <a class="nav-link" href="streaming.html"><i class="fas fa-play-circle"></i> Streaming</a>
+  <a class="nav-link" href="schedule.html"><i class="fas fa-calendar"></i> Schedule</a>
+  <a class="nav-link" href="news.html"><i class="fas fa-newspaper"></i> News</a>
+  <a class="nav-link" href="tv.html"><i class="fas fa-tv"></i> Live TV</a>
+  <a class="nav-link" href="docs.html"><i class="fas fa-book"></i> Docs</a>
+</div>
+
+<div class="page-wrap">
+  <div class="page-header">
+    <div class="container">
+      <h1><i class="fas fa-satellite-dish"></i> Watch &amp; News</h1>
+      <p>Live match streams and latest sports news — all in one place</p>
+    </div>
+  </div>
+
+  <section>
+    <div class="container">
+
+      <!-- Top-level tab switcher -->
+      <div class="content-tabs">
+        <button class="content-tab active" id="tab-streams" onclick="switchTab('streams')">
+          <i class="fas fa-play-circle"></i> Streams
+        </button>
+        <button class="content-tab" id="tab-news" onclick="switchTab('news')">
+          <i class="fas fa-newspaper"></i> News
+        </button>
+      </div>
+
+      <!-- ── STREAMS PANEL ── -->
+      <div class="content-panel visible" id="panel-streams">
+        <div class="error-banner" id="err-streams"><i class="fas fa-exclamation-circle"></i><span>Could not load streaming data.</span></div>
+        <div class="section-hdr">
+          <div class="filter-row" id="sport-filter">
+            <button class="filter-btn active" data-sport="all" onclick="filterSport(this)">All Sports</button>
+            <button class="filter-btn" data-sport="football" onclick="filterSport(this)"><i class="fas fa-futbol"></i> Football</button>
+            <button class="filter-btn" data-sport="basketball" onclick="filterSport(this)"><i class="fas fa-basketball"></i> Basketball</button>
+          </div>
+          <div class="filter-row" id="status-filter">
+            <button class="filter-btn active" data-status="all" onclick="filterStatus(this)">All</button>
+            <button class="filter-btn" data-status="live" onclick="filterStatus(this)"><i class="fas fa-circle" style="color:var(--accent);font-size:8px"></i> Live</button>
+            <button class="filter-btn" data-status="upcoming" onclick="filterStatus(this)"><i class="fas fa-clock"></i> Upcoming</button>
+          </div>
+        </div>
+        <div style="margin-bottom:14px"><span id="match-count" style="font-size:.82rem;color:var(--muted)"></span></div>
+        <div class="matches-grid" id="matches-grid"></div>
+      </div>
+
+      <!-- ── NEWS PANEL ── -->
+      <div class="content-panel" id="panel-news">
+        <div class="error-banner" id="err-news"><i class="fas fa-exclamation-circle"></i><span>Could not load news.</span></div>
+        <div class="section-hdr">
+          <div class="filter-row" id="news-tag-filter">
+            <button class="filter-btn active" data-tag="" onclick="switchNewsTag(this)">All</button>
+            <button class="filter-btn" data-tag="football" onclick="switchNewsTag(this)"><i class="fas fa-futbol"></i> Football</button>
+            <button class="filter-btn" data-tag="basketball" onclick="switchNewsTag(this)"><i class="fas fa-basketball"></i> Basketball</button>
+            <button class="filter-btn" data-tag="tennis" onclick="switchNewsTag(this)"><i class="fas fa-table-tennis"></i> Tennis</button>
+            <button class="filter-btn" data-tag="cricket" onclick="switchNewsTag(this)">Cricket</button>
+          </div>
+          <span id="news-count" style="font-size:.82rem;color:var(--muted)"></span>
+        </div>
+        <div class="news-grid" id="news-grid"></div>
+        <div class="load-more-wrap" id="news-load-more-wrap" style="display:none">
+          <button class="load-more-btn" onclick="loadMoreNews()"><i class="fas fa-plus"></i> Load More</button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</div>
+
+<footer><p>&#9889; MatchZone Live &nbsp;|&nbsp; &copy; 2025 PrinceTech &nbsp;|&nbsp; <a href="https://github.com/Mayelprince" target="_blank" rel="noopener" style="color:inherit"><i class="fab fa-github"></i> GitHub</a></p></footer>
+
+<div class="ended-overlay" id="ended-modal">
+  <button class="ended-close" onclick="closeEndedModal()"><i class="fas fa-times"></i></button>
+  <div class="ended-content">
+    <div class="ended-badge"><i class="fas fa-flag-checkered"></i>&nbsp;<span id="ended-status">Full Time</span></div>
+    <div class="ended-league" id="ended-league"></div>
+    <div class="ended-scoreboard">
+      <div class="ended-team">
+        <div class="ended-logo" id="ended-home-logo"></div>
+        <div class="ended-team-name" id="ended-home">Home</div>
+      </div>
+      <div class="ended-score-wrap">
+        <div class="ended-score" id="ended-score">— – —</div>
+        <div class="ended-ht" id="ended-ht"></div>
+      </div>
+      <div class="ended-team">
+        <div class="ended-logo" id="ended-away-logo"></div>
+        <div class="ended-team-name" id="ended-away">Away</div>
+      </div>
+    </div>
+    <div class="ended-divider"></div>
+    <div class="ended-msg">This match has ended. Streaming is no longer available.</div>
+    <div class="ended-actions">
+      <button class="watch-btn" onclick="closeEndedModal()"><i class="fas fa-times"></i>&nbsp;Close</button>
+    </div>
+    <div class="ended-watermark">MatchZone Live &middot; Powered by Prince API</div>
+  </div>
+</div>
+
+<div class="modal-bg" id="match-modal">
+  <div class="modal">
+    <div class="modal-head"><h3 id="modal-title">Match Details</h3><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<div class="nfp" id="player-modal">
+  <div class="nfp-top" id="nfp-top">
+    <button class="nfp-btn" onclick="closePlayer()"><i class="fas fa-arrow-left"></i></button>
+    <div class="nfp-top-title-wrap">
+      <span class="nfp-live-pulse"></span>
+      <span class="nfp-top-title" id="player-title">Watch Live</span>
+    </div>
+    <button class="nfp-btn nfp-pip-btn" onclick="togglePiP()" title="Picture in Picture"><i class="fas fa-clone"></i></button>
+  </div>
+  <div class="nfp-media" id="player-wrap">
+    <video id="player-video" playsinline preload="none"></video>
+    <iframe id="player-iframe" allowfullscreen allow="autoplay; fullscreen; picture-in-picture" sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe>
+    <div class="nfp-error" id="player-error">
+      <i class="fas fa-satellite-dish"></i>
+      <p>Stream unavailable</p>
+      <small>This channel may be geo-restricted to another region, or the broadcaster is offline. Try a VPN if available.</small>
+    </div>
+  </div>
+  <div class="nfp-center" id="nfp-center">
+    <div class="nfp-big-btn" onclick="togglePlayPause()"><i class="fas fa-pause" id="big-play-icon"></i></div>
+  </div>
+  <div class="nfp-bottom" id="nfp-bottom">
+    <div class="nfp-progress-row">
+      <div class="nfp-progress"><div class="nfp-prog-fill"></div></div>
+      <span class="nfp-live-tag"><i class="fas fa-circle"></i> LIVE</span>
+    </div>
+    <div class="nfp-ctrl-row">
+      <div class="nfp-ctrl-left">
+        <button class="nfp-btn" onclick="togglePlayPause()"><i class="fas fa-pause" id="play-icon"></i></button>
+        <div class="nfp-vol-row">
+          <button class="nfp-btn" onclick="toggleMute()"><i class="fas fa-volume-up" id="vol-icon"></i></button>
+          <input type="range" class="nfp-vol" id="vol-slider" min="0" max="1" step="0.05" value="1" oninput="setVolume(this.value)">
+        </div>
+        <span class="nfp-qual" id="quality-badge"></span>
+      </div>
+      <div class="nfp-ctrl-right">
+        <button class="nfp-btn" onclick="toggleFullscreen()"><i class="fas fa-expand" id="fs-icon"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="news-modal">
+  <div class="modal">
+    <div class="modal-head"><h3 id="news-modal-title">News</h3><button class="modal-close" onclick="closeNewsModal()"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body news-reader-body" id="news-modal-body"></div>
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+// ── TAB SWITCHER ──
+let activeTab = 'streams';
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.content-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelectorAll('.content-panel').forEach(p => p.classList.remove('visible'));
+  document.getElementById('panel-' + tab).classList.add('visible');
+  if (tab === 'news' && !newsLoaded) loadNews(true);
+}
+
+// ── STREAMS ──
+let allMatches = [];
+let currentSport = 'all';
+let currentStatus = 'all';
+
+function filterSport(btn) {
+  document.querySelectorAll('#sport-filter .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentSport = btn.dataset.sport;
+  renderStreams();
+}
+
+function filterStatus(btn) {
+  document.querySelectorAll('#status-filter .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentStatus = btn.dataset.status;
+  renderStreams();
+}
+
+function renderStreams() {
+  clearCache();
+  let matches = allMatches;
+  if (currentSport !== 'all') matches = matches.filter(m => (m.sport || '').toLowerCase() === currentSport);
+  if (currentStatus === 'live') matches = matches.filter(m => isLive(m.status));
+  else if (currentStatus === 'upcoming') matches = matches.filter(m => !isLive(m.status) && !isFinished(m.status));
+  document.getElementById('match-count').textContent = matches.length + ' match' + (matches.length !== 1 ? 'es' : '');
+  const grid = document.getElementById('matches-grid');
+  if (!matches.length) {
+    grid.innerHTML = `<div class="empty"><i class="fas fa-satellite-dish"></i><p>No streamable matches found</p></div>`;
+    return;
+  }
+  grid.innerHTML = matches.map(m => buildMatchCard(m, true)).join('');
+}
+
+async function loadStreams() {
+  hideBanner('err-streams');
+  document.getElementById('matches-grid').innerHTML = skeletons(9);
+  try {
+    const res = await fetch(apiUrl('/matchzone/data/streaming?sport=all'));
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    if (!json.success) throw new Error('API error');
+    allMatches = json.result?.matches || [];
+    const liveCount = allMatches.filter(m => isLive(m.status)).length;
+    document.getElementById('live-badge').textContent = liveCount + ' LIVE';
+    renderStreams();
+  } catch (e) {
+    showBanner('err-streams', 'Failed to load streaming data. ' + e.message);
+    document.getElementById('matches-grid').innerHTML = `<div class="empty"><i class="fas fa-exclamation-triangle"></i><p>Could not load streams.</p></div>`;
+  }
+}
+
+// ── NEWS ──
+let newsLoaded = false;
+let currentNewsTag = '';
+let currentNewsPage = 1;
+let allNewsItems = [];
+
+function buildNewsCard(n) {
+  const key = cacheNews(n);
+  const thumb = (n.cover?.url) || (typeof n.cover === 'string' ? n.cover : '') || n.thumbnail || n.image || '';
+  const title = n.title || n.headline || 'Sports News';
+  const summary = n.summary || n.desc || n.description || '';
+  const catVal = n.category;
+  const category = typeof catVal === 'string' ? catVal : (typeof catVal === 'number' ? 'Sports' : catVal?.name || 'Sports');
+  const ts = n.createdAt || n.publishTime || n.date || n.publishedAt || '';
+  const dateStr = ts ? new Date(Number(ts) || ts).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent';
+  return `
+  <div class="news-card" onclick="openNewsModal('${key}')">
+    ${thumb ? `<img class="news-thumb" src="${thumb}" alt="${title}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ''}
+    <div class="news-thumb-ph" style="${thumb ? 'display:none' : ''}"><i class="fas fa-newspaper"></i></div>
+    <div class="news-body">
+      <div class="news-tag">${category}</div>
+      <div class="news-title">${title}</div>
+      ${summary ? `<div class="news-summary">${summary}</div>` : ''}
+      <div class="news-meta"><i class="fas fa-clock"></i>${dateStr}</div>
+    </div>
+  </div>`;
+}
+
+function switchNewsTag(btn) {
+  document.querySelectorAll('#news-tag-filter .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentNewsTag = btn.dataset.tag;
+  currentNewsPage = 1;
+  allNewsItems = [];
+  loadNews(true);
+}
+
+async function loadNews(reset = false) {
+  hideBanner('err-news');
+  const grid = document.getElementById('news-grid');
+  if (reset) grid.innerHTML = skeletons(8, 'skel-news');
+
+  try {
+    const res = await fetch(apiUrl(`/matchzone/data/news?tag=${encodeURIComponent(currentNewsTag)}&page=${currentNewsPage}`));
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    if (!json.success) throw new Error('API error');
+    const items = json.result?.data?.items || json.result?.items || json.result?.list || [];
+    if (reset) allNewsItems = items; else allNewsItems = [...allNewsItems, ...items];
+    document.getElementById('news-count').textContent = allNewsItems.length + ' article' + (allNewsItems.length !== 1 ? 's' : '');
+    if (!allNewsItems.length) {
+      grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><i class="fas fa-newspaper"></i><p>No news found</p></div>`;
+      document.getElementById('news-load-more-wrap').style.display = 'none';
+      return;
+    }
+    grid.innerHTML = allNewsItems.map(n => buildNewsCard(n)).join('');
+    document.getElementById('news-load-more-wrap').style.display = items.length >= 15 ? 'block' : 'none';
+    newsLoaded = true;
+  } catch (e) {
+    if (reset) grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><i class="fas fa-exclamation-triangle"></i><p>Failed to load news</p></div>`;
+    showBanner('err-news', 'Could not load news. ' + e.message);
+  }
+}
+
+async function loadMoreNews() {
+  currentNewsPage++;
+  const btn = document.querySelector('#news-load-more-wrap .load-more-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...'; }
+  await loadNews(false);
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-plus"></i> Load More'; }
+}
+
+// Init
+loadStreams();
+setInterval(loadStreams, 60000);
+</script>
+</body>
+</html>
