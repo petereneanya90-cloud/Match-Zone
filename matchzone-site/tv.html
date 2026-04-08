@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MatchZone Live – Live TV</title>
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="MatchZone Live – Live TV">
+  <meta property="og:description" content="894 live TV channels from 49 countries, free in your browser.">
+  <meta property="og:image" content="https://prince-apis.replitmayel.replit.app/matchzone/assets/og-preview.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="MatchZone Live – Live TV">
+  <meta name="twitter:description" content="894 live TV channels from 49 countries, free in your browser.">
+  <meta name="twitter:image" content="https://prince-apis.replitmayel.replit.app/matchzone/assets/og-preview.png">
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="assets/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js"></script>
+  <style>
+    .tv-controls {
+      display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: center;
+    }
+    .tv-search {
+      flex: 1; min-width: 160px; max-width: 320px;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); border-radius: 8px; padding: 8px 14px;
+      font-size: .87rem; outline: none; transition: border-color .2s;
+    }
+    @media (max-width: 480px) {
+      .tv-search { min-width: 0; max-width: 100%; width: 100%; flex: none; }
+      .country-select { min-width: 0; width: 100%; }
+      .tv-count { width: 100%; }
+    }
+    .tv-search:focus { border-color: var(--primary); }
+    .tv-search::placeholder { color: var(--muted); }
+    .country-select {
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); border-radius: 8px; padding: 8px 14px;
+      font-size: .87rem; outline: none; cursor: pointer; min-width: 180px;
+      transition: border-color .2s;
+    }
+    .country-select:focus { border-color: var(--primary); }
+    .country-select option { background: #1a1a2e; }
+    .tv-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+    }
+    .tv-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden; cursor: pointer;
+      transition: transform .18s, border-color .18s, box-shadow .18s;
+      display: flex; flex-direction: column;
+    }
+    .tv-card:hover {
+      transform: translateY(-3px); border-color: rgba(0,229,255,.3);
+      box-shadow: 0 6px 24px rgba(0,229,255,.08);
+    }
+    .tv-logo-wrap {
+      background: rgba(255,255,255,.04); height: 110px;
+      display: flex; align-items: center; justify-content: center; padding: 16px;
+    }
+    .tv-logo { max-width: 100%; max-height: 80px; object-fit: contain; }
+    .tv-logo-ph {
+      width: 60px; height: 60px; border-radius: 50%;
+      background: var(--primary-dim); display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem; color: var(--primary);
+    }
+    .tv-body { padding: 10px 12px 12px; flex: 1; display: flex; flex-direction: column; gap: 6px; }
+    .tv-name { font-size: .84rem; font-weight: 700; color: var(--text); line-height: 1.3; }
+    .tv-lang { font-size: .72rem; color: var(--muted); }
+    .tv-watch {
+      margin-top: auto; width: 100%; padding: 7px 0; font-size: .8rem; font-weight: 700;
+      background: var(--primary-dim); color: var(--primary); border: 1px solid rgba(0,229,255,.2);
+      border-radius: 6px; cursor: pointer; transition: background .18s; display: flex;
+      align-items: center; justify-content: center; gap: 6px;
+    }
+    .tv-watch:hover { background: rgba(0,229,255,.18); }
+    .tv-count { font-size:.82rem; color:var(--muted); white-space:nowrap; }
+    @media (max-width:600px) {
+      .tv-grid { grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); }
+      .tv-logo-wrap { height: 80px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a class="logo" href="index.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="26" height="26" style="vertical-align:middle;margin-right:5px;flex-shrink:0"><defs><linearGradient id="mzg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00e5ff"/><stop offset="100%" stop-color="#0066ff"/></linearGradient></defs><rect width="36" height="36" rx="9" fill="url(#mzg)"/><text x="18" y="25" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="17" fill="#000" letter-spacing="-1">MZ</text></svg>Match<span>Zone</span></a>
+    <div class="nav-links">
+      <a class="nav-link" href="index.html"><i class="fas fa-home"></i> Home</a>
+      <a class="nav-link" href="live.html"><i class="fas fa-circle-dot"></i> Live</a>
+      <a class="nav-link" href="streaming.html"><i class="fas fa-play-circle"></i> Streaming</a>
+      <a class="nav-link" href="schedule.html"><i class="fas fa-calendar"></i> Schedule</a>
+      <a class="nav-link" href="news.html"><i class="fas fa-newspaper"></i> News</a>
+      <a class="nav-link" href="tv.html"><i class="fas fa-tv"></i> Live TV</a>
+      <a class="nav-link" href="docs.html"><i class="fas fa-book"></i> Docs</a>
+    </div>
+    <span class="live-badge" id="live-badge">— LIVE</span>
+    <button class="nav-hamburger" id="nav-hamburger" onclick="toggleDrawer()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+<div class="nav-drawer" id="nav-drawer">
+  <a class="nav-link" href="index.html"><i class="fas fa-home"></i> Home</a>
+  <a class="nav-link" href="live.html"><i class="fas fa-circle-dot"></i> Live</a>
+  <a class="nav-link" href="streaming.html"><i class="fas fa-play-circle"></i> Streaming</a>
+  <a class="nav-link" href="schedule.html"><i class="fas fa-calendar"></i> Schedule</a>
+  <a class="nav-link" href="news.html"><i class="fas fa-newspaper"></i> News</a>
+  <a class="nav-link" href="tv.html"><i class="fas fa-tv"></i> Live TV</a>
+  <a class="nav-link" href="docs.html"><i class="fas fa-book"></i> Docs</a>
+</div>
+
+<div class="page-wrap">
+  <div class="page-header">
+    <div class="container">
+      <h1><i class="fas fa-broadcast-tower"></i> Live TV</h1>
+      <p>894 news & TV channels from 49 countries — watch live in your browser</p>
+    </div>
+  </div>
+
+  <section>
+    <div class="container">
+      <div class="error-banner" id="err"><i class="fas fa-exclamation-circle"></i><span>Could not load channels.</span></div>
+
+      <div class="tv-controls">
+        <input class="tv-search" id="search-input" type="text" placeholder="Search channels..." oninput="renderChannels()">
+        <select class="country-select" id="country-select" onchange="loadByCountry()">
+          <option value="">All Channels (894)</option>
+        </select>
+        <span class="tv-count" id="ch-count"></span>
+      </div>
+
+      <div class="tv-grid" id="tv-grid"></div>
+    </div>
+  </section>
+</div>
+
+<footer><p>&#9889; MatchZone Live &nbsp;|&nbsp; &copy; 2025 PrinceTech &nbsp;|&nbsp; <a href="https://github.com/Mayelprince" target="_blank" rel="noopener" style="color:inherit"><i class="fab fa-github"></i> GitHub</a></p></footer>
+
+
+
+<div class="nfp" id="player-modal">
+  <div class="nfp-top" id="nfp-top">
+    <button class="nfp-btn" onclick="closePlayer()"><i class="fas fa-arrow-left"></i></button>
+    <div class="nfp-top-title-wrap">
+      <span class="nfp-live-pulse"></span>
+      <span class="nfp-top-title" id="player-title">Watch Live</span>
+    </div>
+    <button class="nfp-btn nfp-pip-btn" onclick="togglePiP()" title="Picture in Picture"><i class="fas fa-clone"></i></button>
+  </div>
+  <div class="nfp-media" id="player-wrap">
+    <video id="player-video" playsinline preload="none"></video>
+    <iframe id="player-iframe" allowfullscreen allow="autoplay; fullscreen; picture-in-picture" sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe>
+    <div class="nfp-error" id="player-error">
+      <i class="fas fa-satellite-dish"></i>
+      <p>Stream unavailable</p>
+      <small>No working stream found. All available links were tried — check back during a live match.</small>
+    </div>
+    <div class="nfp-loader" id="player-loader">
+      <div class="nfp-spinner"></div>
+      <span id="loader-text">Loading stream…</span>
+    </div>
+  </div>
+  <div class="nfp-center" id="nfp-center">
+    <div class="nfp-big-btn" onclick="togglePlayPause()"><i class="fas fa-pause" id="big-play-icon"></i></div>
+  </div>
+  <div class="nfp-bottom" id="nfp-bottom">
+    <div class="nfp-progress-row">
+      <div class="nfp-progress"><div class="nfp-prog-fill"></div></div>
+      <span class="nfp-live-tag"><i class="fas fa-circle"></i> LIVE</span>
+    </div>
+    <div class="nfp-ctrl-row">
+      <div class="nfp-ctrl-left">
+        <button class="nfp-btn" onclick="togglePlayPause()"><i class="fas fa-pause" id="play-icon"></i></button>
+        <div class="nfp-vol-row">
+          <button class="nfp-btn" onclick="toggleMute()"><i class="fas fa-volume-up" id="vol-icon"></i></button>
+          <input type="range" class="nfp-vol" id="vol-slider" min="0" max="1" step="0.05" value="1" oninput="setVolume(this.value)">
+        </div>
+        <span class="nfp-qual" id="quality-badge"></span>
+      </div>
+      <div class="nfp-ctrl-right">
+        <button class="nfp-btn" onclick="toggleFullscreen()"><i class="fas fa-expand" id="fs-icon"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+let allChannels = [];
+let currentCountry = '';
+
+function buildTvCard(ch) {
+  const name = ch.name || 'Unknown Channel';
+  const logo = ch.logo || '';
+  const lang = ch.language && ch.language !== 'Unknown' ? ch.language : '';
+  const url = ch.url || '';
+  const safeUrl = url.replace(/'/g, "\\'");
+  const safeName = name.replace(/'/g, "\\'");
+  return `
+  <div class="tv-card" onclick="playStream('${safeUrl}','${safeName}')">
+    <div class="tv-logo-wrap">
+      ${logo
+        ? `<img class="tv-logo" src="${logo}" alt="${name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+           <div class="tv-logo-ph" style="display:none"><i class="fas fa-tv"></i></div>`
+        : `<div class="tv-logo-ph"><i class="fas fa-tv"></i></div>`}
+    </div>
+    <div class="tv-body">
+      <div class="tv-name">${name}</div>
+      ${lang ? `<div class="tv-lang"><i class="fas fa-globe" style="font-size:10px"></i> ${lang}</div>` : ''}
+      <button class="tv-watch" onclick="event.stopPropagation();playStream('${safeUrl}','${safeName}')">
+        <i class="fas fa-play"></i> Watch
+      </button>
+    </div>
+  </div>`;
+}
+
+function renderChannels() {
+  const q = (document.getElementById('search-input').value || '').toLowerCase();
+  const filtered = q ? allChannels.filter(c => (c.name || '').toLowerCase().includes(q)) : allChannels;
+  document.getElementById('ch-count').textContent = filtered.length + ' channel' + (filtered.length !== 1 ? 's' : '');
+  const grid = document.getElementById('tv-grid');
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><i class="fas fa-tv"></i><p>No channels found</p></div>`;
+    return;
+  }
+  grid.innerHTML = filtered.map(ch => buildTvCard(ch)).join('');
+}
+
+async function loadByCountry() {
+  currentCountry = document.getElementById('country-select').value;
+  document.getElementById('search-input').value = '';
+  hideBanner('err');
+  document.getElementById('tv-grid').innerHTML = skeletons(16, 'skel-card');
+  try {
+    const url = currentCountry
+      ? apiUrl(`/matchzone/data/tv-channels?country=${encodeURIComponent(currentCountry)}`)
+      : apiUrl('/matchzone/data/tv-channels');
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    if (!json.success) throw new Error('API error');
+    allChannels = json.result?.channels || json.result?.result?.channels || [];
+    renderChannels();
+  } catch (e) {
+    showBanner('err', 'Failed to load channels. ' + e.message);
+    document.getElementById('tv-grid').innerHTML = `<div class="empty" style="grid-column:1/-1"><i class="fas fa-exclamation-triangle"></i><p>Could not load channels</p></div>`;
+  }
+}
+
+async function loadCountries() {
+  try {
+    const res = await fetch(apiUrl('/matchzone/data/tv-countries'));
+    const json = await res.json();
+    const countries = json.result?.countries || [];
+    const sel = document.getElementById('country-select');
+    countries.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.code;
+      opt.textContent = (c.flag ? c.flag + ' ' : '') + c.name;
+      sel.appendChild(opt);
+    });
+  } catch (e) {}
+}
+
+loadCountries();
+loadByCountry();
+
+</script>
+</body>
+</html>
