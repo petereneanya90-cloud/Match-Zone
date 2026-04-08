@@ -194,35 +194,8 @@ function playStreamIfLive(matchKey, url, title) {
 }
 
 function showMatchEndedScreen(m) {
-  const el = document.getElementById('ended-modal');
-  if (!el) return;
-  const hs = (m.homeScore != null && m.homeScore !== '') ? m.homeScore : '—';
-  const as_ = (m.awayScore != null && m.awayScore !== '') ? m.awayScore : '—';
-  const statusEl = el.querySelector('#ended-status');
-  const leagueEl = el.querySelector('#ended-league');
-  const scoreEl  = el.querySelector('#ended-score');
-  const htEl     = el.querySelector('#ended-ht');
-  const homeEl   = el.querySelector('#ended-home');
-  const awayEl   = el.querySelector('#ended-away');
-  const homeLogoEl = el.querySelector('#ended-home-logo');
-  const awayLogoEl = el.querySelector('#ended-away-logo');
-  if (statusEl) statusEl.textContent = m.status || 'Full Time';
-  if (leagueEl) leagueEl.textContent = [m.league, m.sport ? m.sport.charAt(0).toUpperCase() + m.sport.slice(1) : ''].filter(Boolean).join(' · ');
-  if (scoreEl)  scoreEl.textContent  = `${hs}  –  ${as_}`;
-  if (htEl)     htEl.textContent     = m.halfTimeScore ? 'Half-time: ' + m.halfTimeScore : '';
-  if (homeEl)   homeEl.textContent   = m.homeTeam  || 'Home';
-  if (awayEl)   awayEl.textContent   = m.awayTeam  || 'Away';
-  if (homeLogoEl) homeLogoEl.innerHTML = teamLogoHtml(m.homeLogo,  m.homeTeam  || 'Home');
-  if (awayLogoEl) awayLogoEl.innerHTML = teamLogoHtml(m.awayLogo,  m.awayTeam  || 'Away');
-  el.classList.add('open');
-  el.scrollTop = 0;
-  document.body.style.overflow = 'hidden';
-}
-
-function closeEndedModal() {
-  const el = document.getElementById('ended-modal');
-  if (el) el.classList.remove('open');
-  document.body.style.overflow = '';
+  try { sessionStorage.setItem('endedMatch', JSON.stringify(m)); } catch {}
+  window.location.href = 'ended.html';
 }
 
 function playStream(url, title) {
@@ -551,9 +524,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const nbg = document.getElementById('news-modal');
   if (nbg) nbg.addEventListener('click', e => { if (e.target === nbg) closeNewsModal(); });
 
-  // Ended match overlay backdrop
-  const ebg = document.getElementById('ended-modal');
-  if (ebg) ebg.addEventListener('click', e => { if (e.target === ebg) closeEndedModal(); });
 
   // NFP player: mouse move / touch to show controls
   const nfpEl = document.getElementById('player-modal');
